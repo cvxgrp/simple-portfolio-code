@@ -104,6 +104,7 @@ def load_returns() -> tuple[pd.DataFrame, pd.Series]:
 
 
 def main() -> None:
+    print("Started statistical inference...", flush=True)
     OUT_DIR.mkdir(parents=True, exist_ok=True)
     returns, rf = load_returns()
     labels = list(returns.columns)
@@ -259,6 +260,7 @@ def main() -> None:
         f"{n_trials} documented sweep specifications as the trial count, which is a lower bound "
         "on the true number of specifications considered."
     )
+    print("Done.", flush=True)
 
 
 main()

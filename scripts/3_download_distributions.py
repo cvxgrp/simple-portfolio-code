@@ -25,6 +25,7 @@ OUT_PATH = Path("data/raw/income_returns.parquet")
 
 
 def main() -> None:
+    print("Started downloading distribution data...", flush=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
     calendar = closes.loc[START_DATE:END_DATE].index
 
@@ -73,6 +74,7 @@ def main() -> None:
         price = price.reindex(calendar).ffill()
         residual = (total[asset] - (price.pct_change() + income[asset])).abs()
         print(f"  {asset}: {residual.mean():.2e} (max {residual.max():.2e})")
+    print("Done.", flush=True)
 
 
 main()

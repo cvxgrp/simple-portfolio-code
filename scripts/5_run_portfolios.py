@@ -68,6 +68,7 @@ proc_data_dir.mkdir(parents=True, exist_ok=True)
 
 # ── Load data ─────────────────────────────────────────────────────────────────
 
+print("Started running portfolio backtests...", flush=True)
 print("Loading data...")
 closes = pd.read_parquet("data/raw/closes.parquet")
 ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
@@ -540,4 +541,5 @@ for vol_target_ann, vol_target_daily in zip(VOL_TARGETS_ANN, VOL_TARGETS_DAILY, 
 
         results[result_name].save(results_dir / f"{result_name}.pkl")
 
-print(f"\nDone. Saved Pareto results to {results_dir}")
+print(f"\nSaved Pareto results to {results_dir}")
+print("Done.", flush=True)

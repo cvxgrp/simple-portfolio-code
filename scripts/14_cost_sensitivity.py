@@ -48,6 +48,7 @@ def sliced(result: BacktestResults) -> BacktestResults:
 
 
 def main() -> None:
+    print("Started cost sensitivity analysis...", flush=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
@@ -186,6 +187,7 @@ def main() -> None:
     print("\n=== Cash haircut of 25bp at the base spread")
     cut = table.xs(SPREADS[0], level="Spread")
     print(cut.to_string(float_format=lambda v: f"{v:.4f}"))
+    print("Done.", flush=True)
 
 
 main()

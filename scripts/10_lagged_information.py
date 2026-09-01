@@ -49,6 +49,7 @@ def evaluate(result: BacktestResults, ffr: pd.Series, cpi: pd.Series) -> pd.Seri
 
 
 def main() -> None:
+    print("Started lagged-information analysis...", flush=True)
     """Run Markowitz with alpha-only and joint information lags."""
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
@@ -97,6 +98,7 @@ def main() -> None:
     Path("output/tables").mkdir(parents=True, exist_ok=True)
     table.to_csv("output/tables/results_lagged_information.csv")
     print(table.to_string(float_format=lambda value: f"{value:.4f}"))
+    print("Done.", flush=True)
 
 
 main()

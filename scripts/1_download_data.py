@@ -45,6 +45,8 @@ FRED_FEATURE_SERIES = {
 
 # ── Stage 1: Download raw data ─────────────────────────────────────────────────
 
+print("Started downloading and processing data...", flush=True)
+
 raw_data_dir = Path("data/raw")
 raw_data_dir.mkdir(parents=True, exist_ok=True)
 
@@ -369,3 +371,4 @@ with (risk_model_dir / "sbg.pkl").open("wb") as f:
 print("Risk models complete.")
 
 print("Setup complete.")
+print("Done.", flush=True)

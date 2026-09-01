@@ -56,6 +56,7 @@ def sliced(result: BacktestResults, start: pd.Timestamp, end: pd.Timestamp) -> B
 
 def main() -> None:
     """Fit each alpha variant, backtest it, and save full and split-sample metrics."""
+    print("Started hyperparameter sensitivity analysis...", flush=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
     ext_features = pd.read_parquet("data/processed/ext_features.parquet")
     etf_features = pd.read_parquet("data/processed/etf_features.parquet")
@@ -118,6 +119,7 @@ def main() -> None:
         "output/tables/ridge_hyperparameter_sweep_full.csv"
     )
     print(table.to_string(float_format=lambda value: f"{value:.4f}"))
+    print("Done.", flush=True)
 
 
 main()

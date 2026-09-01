@@ -1,7 +1,7 @@
 # Simple Dynamic Stock/Bond/Gold Portfolios
 
-This repository contains the code used to reproduce the results in *Simple Dynamic
-Stock/Bond/Gold Portfolios*.
+This repository contains the code used to reproduce the results in [*Simple Dynamic
+Stock/Bond/Gold Portfolios*](https://stanford.edu/~boyd/papers/simple_sbg_portfolio.html).
 
 ## Reproduce the results
 
@@ -9,7 +9,7 @@ Stock/Bond/Gold Portfolios*.
 2. Clone this repository and enter it:
 
    ```bash
-   git clone <repository-url>
+   git clone https://github.com/cvxgrp/simple-portfolio-code.git
    cd simple-portfolio-code
    ```
 

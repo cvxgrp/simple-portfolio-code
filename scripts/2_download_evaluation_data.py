@@ -19,9 +19,11 @@ START_DATE = "1995-01-01"
 
 out_path = Path("data/raw/closes_eval.parquet")
 
+print("Started downloading evaluation data...", flush=True)
 closes = yf.download(ASSETS, start=START_DATE, auto_adjust=True)["Close"][ASSETS]
 closes = closes.loc[closes["SPY"].dropna().index]  # trading days, as in the main pipeline
 closes.to_parquet(out_path)
 print(
     f"Saved {out_path}: {len(closes)} rows, {closes.index[0].date()} to {closes.index[-1].date()}"
 )
+print("Done.", flush=True)

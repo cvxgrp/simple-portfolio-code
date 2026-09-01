@@ -7,6 +7,8 @@ import pandas as pd
 from simple_portfolio.alpha.geo_alpha import get_ridge_alpha_over_time
 
 ASSETS = ["AGG", "SPY", "GLD"]
+
+print("Started generating alphas...", flush=True)
 processed = Path("data/processed")
 
 closes = pd.read_parquet("data/raw/closes.parquet")
@@ -39,3 +41,4 @@ ridge_alpha = get_ridge_alpha_over_time(
     verbose=True,
 )
 ridge_alpha.to_parquet(processed / "alpha_ridge_sbg.parquet")
+print("Done.", flush=True)

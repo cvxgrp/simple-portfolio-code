@@ -46,6 +46,8 @@ TAX_BRACKETS: list[tuple[float, float]] = [
 
 # ── Load reference data ──────────────────────────────────────────────────────
 
+print("Started generating results...", flush=True)
+
 ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
 cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
 
@@ -908,3 +910,4 @@ fig_vol.tight_layout()
 fig_vol.savefig(PLOTS_DIR / "yearly_volatilities.pdf", bbox_inches="tight")
 print(f"Saved {PLOTS_DIR / 'yearly_volatilities.pdf'}")
 plt.close(fig_vol)
+print("Done.", flush=True)

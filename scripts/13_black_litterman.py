@@ -117,6 +117,7 @@ def sliced(result: BacktestResults) -> BacktestResults:
 
 
 def main() -> None:
+    print("Started Black-Litterman sensitivity analysis...", flush=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
@@ -168,7 +169,7 @@ def main() -> None:
     out_dir.mkdir(parents=True, exist_ok=True)
 
     # 1. tau invariance check at the reported delta.
-    print("tau invariance check (delta=2.5, omega=1)", flush=True)
+    print("Started tau invariance check...", flush=True)
     tau_rows = {}
     for tau in TAU_CHECK:
         _, controlled = sleeves(2.5, 1.0, tau)
@@ -176,9 +177,11 @@ def main() -> None:
     tau_table = pd.DataFrame(tau_rows).T
     print(tau_table.to_string(float_format=lambda value: f"{value:.6f}"))
     tau_table.to_csv(out_dir / "bl_tau_invariance.csv")
+    print("Done.", flush=True)
 
     # 2. delta / omega sweep.
     rows = {}
+    print("Started delta-omega sweep...", flush=True)
     for delta in DELTAS:
         for omega in OMEGAS:
             native, controlled = sleeves(delta, omega, BL_TAU)
@@ -195,6 +198,7 @@ def main() -> None:
     table = pd.DataFrame(rows).T
     table.index.names = ["delta", "omega", "variant"]
     table.to_csv(out_dir / "bl_sweep.csv")
+    print("Done.", flush=True)
 
     print("\nBest by Sharpe ratio, each variant")
     best: dict[str, tuple[float, float]] = {}
@@ -216,6 +220,7 @@ def main() -> None:
     print("Average relative weights:")
     print(relative.mean().to_string(float_format=lambda value: f"{value:.4f}"))
     print(f"Average cash weight: {1.0 - gross.mean():.4f}")
+    print("Done.", flush=True)
 
 
 main()

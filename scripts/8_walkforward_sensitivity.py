@@ -121,6 +121,7 @@ def score(
 
 def main() -> None:
     """Run candidate backtests, rolling selections, plots, and summary tables."""
+    print("Started walk-forward sensitivity analysis...", flush=True)
     out_dir = Path("output/tables/ridge_stability")
     out_dir.mkdir(parents=True, exist_ok=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
@@ -159,6 +160,7 @@ def main() -> None:
         (params["horizon"], params["alpha_halflife"], params["ridge"]) for params in SPECS.values()
     }
     alphas = {}
+    print("Started fitting alpha models...", flush=True)
     for horizon, halflife, ridge in sorted(alpha_keys):
         print(f"Fitting alpha h={horizon}, halflife={halflife}, ridge={ridge}", flush=True)
         alpha = get_ridge_alpha_over_time(
@@ -176,9 +178,11 @@ def main() -> None:
         alphas[(horizon, halflife, ridge)] = alpha.reindex(
             index=closes.index, columns=closes.columns, fill_value=0.0
         ).fillna(0.0)
+    print("Done.", flush=True)
 
     constructors = {}
     results = {}
+    print("Started running sensitivity backtests...", flush=True)
     for label, params in SPECS.items():
         alpha_key = (params["horizon"], params["alpha_halflife"], params["ridge"])
         constructors[label] = AnchoredVolControlPortfolioConstructor(
@@ -191,8 +195,10 @@ def main() -> None:
             leverage=1.0,
         )
         results[label] = run_backtest(label, data, constructors[label])
+    print("Done.", flush=True)
 
     # Fixed-start, varying-end-date Sharpe and its one-opt hindsight envelope.
+    print("Started evaluating walk-forward stability...", flush=True)
     end_rows = []
     for end_year in range(2011, 2026):
         end = pd.Timestamp(f"{end_year}-12-31")
@@ -306,6 +312,7 @@ def main() -> None:
     print(frequencies.to_string(float_format=lambda value: f"{value:.3f}"))
     print("\nWalk-forward performance")
     print(walkforward_df.to_string(index=False, float_format=lambda value: f"{value:.4f}"))
+    print("Done.", flush=True)
 
 
 main()

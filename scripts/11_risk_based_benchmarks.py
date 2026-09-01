@@ -117,6 +117,7 @@ def sliced(result: BacktestResults) -> BacktestResults:
 
 
 def main() -> None:
+    print("Started risk-based benchmark analysis...", flush=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
@@ -151,6 +152,7 @@ def main() -> None:
     controlled = {label: np.zeros_like(native[label]) for label in labels}
     previous = {label: ANCHOR.copy() for label in labels}
 
+    print("Started computing benchmark weights...", flush=True)
     for row, date_value in enumerate(data.timeline):
         date = pd.Timestamp(date_value)
         covariance = covariance_at(risk_model, date, indices)
@@ -186,6 +188,7 @@ def main() -> None:
             scale = min(VOL_TARGET / estimated_volatility, 1.0)
             native[label][row, indices] = sleeve
             controlled[label][row, indices] = scale * sleeve
+    print("Done.", flush=True)
 
     constructors = {}
     for label in labels:
@@ -208,6 +211,7 @@ def main() -> None:
     weight_rows = {}
     out_dir = Path("output/tables/risk_based_benchmarks")
     out_dir.mkdir(parents=True, exist_ok=True)
+    print("Started running benchmark backtests...", flush=True)
     for name, constructor in constructors.items():
         print(f"Backtesting {name}", flush=True)
         result = run_backtest(name, data, constructor)
@@ -215,6 +219,7 @@ def main() -> None:
         result.save(out_dir / f"{name.lower().replace(' ', '_').replace('/', '_')}.pkl")
         weights = result.composition.loc[EVAL_START:END_DATE, ASSETS]
         weight_rows[name] = weights.mean().rename(name)
+    print("Done.", flush=True)
 
     table = pd.DataFrame(rows).T
     table.to_csv(out_dir / "performance.csv")
@@ -223,6 +228,7 @@ def main() -> None:
     print(table.to_string(float_format=lambda value: f"{value:.4f}"))
     print("\nAverage risky weights")
     print(pd.DataFrame(weight_rows).T.to_string(float_format=lambda value: f"{value:.4f}"))
+    print("Done.", flush=True)
 
 
 main()

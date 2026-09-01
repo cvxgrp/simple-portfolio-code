@@ -161,6 +161,7 @@ def sliced(result: BacktestResults) -> BacktestResults:
 
 
 def main() -> None:
+    print("Started covariance sensitivity analysis...", flush=True)
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
@@ -248,7 +249,7 @@ def main() -> None:
     best = table.loc[table.groupby(level=["Method", "Variant"])["Sharpe Ratio (FFR)"].idxmax()]
     print(best.to_string(float_format=lambda v: f"{v:.4f}"))
     best.to_csv(out_dir / "covariance_grid_best.csv")
-    print("Results saved.", flush=True)
+    print("Done.", flush=True)
 
 
 main()
