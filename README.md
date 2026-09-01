@@ -39,4 +39,11 @@ Stock/Bond/Gold Portfolios*.
    uv run python scripts/14_cost_sensitivity.py
    ```
 
+Most scripts should finish in less than a minute, although
+`12_covariance_sensitivity.py` may take a couple of minutes. Running the full
+sequence should take roughly 10 minutes or less in total.
+
+If you encounter an error while reproducing the results, please open a GitHub
+issue.
+
 Generated tables are written to `output/tables/` and figures to `output/plots/`.

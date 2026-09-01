@@ -165,6 +165,7 @@ def main() -> None:
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
     alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet")
+    print("Data loaded.", flush=True)
 
     data = BacktestData.from_pandas(
         start_date=START_DATE,
@@ -196,8 +197,9 @@ def main() -> None:
 
     rows = {}
     for window in WINDOWS:
-        print(f"--- covariance window {window}d", flush=True)
+        print(f"Window {window}d started.", flush=True)
         covariances = rolling_covariances(returns, window, solve_dates)
+        print(f"Window {window}d covariances computed.", flush=True)
         native = {c: np.zeros((len(data.timeline), len(data.assets))) for c in labels}
         controlled = {c: np.zeros_like(native[c]) for c in labels}
         previous = {c: ANCHOR.copy() for c in labels}
@@ -211,6 +213,7 @@ def main() -> None:
                 estimated = np.sqrt(sleeve @ covariance @ sleeve)
                 native[label][row, indices] = sleeve
                 controlled[label][row, indices] = min(VOL_TARGET / estimated, 1.0) * sleeve
+        print(f"Window {window}d weights computed.", flush=True)
 
         for label in labels:
             for variant, weights in (
@@ -221,6 +224,7 @@ def main() -> None:
                     f"{label} {variant} {window}", data, PrecomputedWeights(lookup, weights)
                 )
                 rows[(label, variant, window)] = compute_metrics(sliced(result), ffr, cpi)[METRICS]
+        print(f"Window {window}d backtests completed.", flush=True)
         print(
             "   "
             + "  ".join(
@@ -244,6 +248,7 @@ def main() -> None:
     best = table.loc[table.groupby(level=["Method", "Variant"])["Sharpe Ratio (FFR)"].idxmax()]
     print(best.to_string(float_format=lambda v: f"{v:.4f}"))
     best.to_csv(out_dir / "covariance_grid_best.csv")
+    print("Results saved.", flush=True)
 
 
 main()
