@@ -1,0 +1,11 @@
+.venv/
+__pycache__/
+*.py[cod]
+data/raw/
+data/processed/
+results/
+output/
+scratch/
+keys/
+*.key
+uv.lock
