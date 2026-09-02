@@ -1,7 +1,7 @@
 # Simple Dynamic Stock/Bond/Gold Portfolios
 
 This repository contains the code used to reproduce the results in [*Simple Dynamic
-Stock/Bond/Gold Portfolios*](https://stanford.edu/~boyd/papers/simple_sbg_portfolio.html).
+Stock/Bond/Gold Portfolios*](https://stanford.edu/~boyd/papers/stock_bond_gold_portfolios.html).
 
 ## Reproduce the results
 
