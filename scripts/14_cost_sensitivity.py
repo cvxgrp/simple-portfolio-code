@@ -100,6 +100,8 @@ def main() -> None:
 
         def alpha_constructor(
             name: str,
+            alpha_scale: float,
+            objective_spread: float,
             lookup: dict = lookup,
             monthly: BacktestData = monthly,
             anchor: np.ndarray = anchor,
@@ -111,17 +113,18 @@ def main() -> None:
                 ts_lookup=lookup,
                 alphas=pd.read_parquet(f"data/processed/{name}.parquet")
                 .loc[monthly.timeline]
-                .to_numpy(),
+                .to_numpy()
+                * alpha_scale,
                 risk_model=risk_model,
                 vol_target=VOL_TARGET,
                 anchor=anchor,
                 universe=universe,
                 leverage=LEVERAGE,
+                bid_ask_spread=objective_spread,
+                cash_rate_horizon_days=21,
             )
 
-        strategies = {
-            "Markowitz": (alpha_constructor("alpha_ridge_sbg"), monthly),
-            "Simple Markowitz": (alpha_constructor("alpha_simple_sbg"), monthly),
+        fixed_strategies = {
             "50/30/20 VC": (
                 FixedWeightVolControlPortfolioConstructor(
                     ts_lookup=lookup,
@@ -164,6 +167,14 @@ def main() -> None:
         for spread in SPREADS:
             if haircut > 0.0 and spread != SPREADS[0]:
                 continue  # only the base spread is re-run under the cash haircut
+            strategies = {
+                "Markowitz": (alpha_constructor("alpha_ridge_sbg", 21 / 252, spread), monthly),
+                "Simple Markowitz": (
+                    alpha_constructor("alpha_simple_sbg", 21, spread),
+                    monthly,
+                ),
+                **fixed_strategies,
+            }
             for label, (constructor, data) in strategies.items():
                 result = run_backtest(label, data, constructor, bid_ask_spread=spread)
                 rows[(label, spread, haircut)] = compute_metrics(sliced(result), ffr, cpi)[METRICS]

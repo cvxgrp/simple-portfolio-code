@@ -109,7 +109,7 @@ def black_litterman_weights(
     covariance_daily: np.ndarray, alpha: np.ndarray, start: np.ndarray
 ) -> np.ndarray:
     """Combine a 50/30/20 equilibrium prior with ridge-alpha absolute views."""
-    covariance = 252.0 * covariance_daily
+    covariance = 21.0 * covariance_daily
     prior = BL_RISK_AVERSION * covariance @ ANCHOR
     prior_precision = np.linalg.inv(BL_TAU * covariance)
     view_precision = np.linalg.inv(BL_TAU * np.diag(np.diag(covariance)))
@@ -165,7 +165,7 @@ def main() -> None:
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
-    alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet")
+    alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet") * (21 / 252)
     print("Data loaded.", flush=True)
 
     data = BacktestData.from_pandas(

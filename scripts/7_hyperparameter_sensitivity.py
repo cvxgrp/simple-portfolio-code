@@ -100,12 +100,14 @@ def main() -> None:
         )
         strategy = AnchoredVolControlPortfolioConstructor(
             ts_lookup=lookup,
-            alphas=alpha.loc[data.timeline].to_numpy(),
+            alphas=alpha.loc[data.timeline].to_numpy() * (21 / 252),
             risk_model=risk_model,
             vol_target=VOL_TARGET,
             anchor=anchor,
             universe=universe,
             leverage=1.0,
+            bid_ask_spread=5e-4,
+            cash_rate_horizon_days=21,
         )
         result = run_backtest(label, data, strategy)
         for window, (start, end) in WINDOWS.items():

@@ -16,6 +16,9 @@ EVAL_START = pd.Timestamp("2006-01-01")
 VOL_TARGET = 0.07 / np.sqrt(252)
 ASSETS = ["SPY", "AGG", "GLD"]
 LAGS = [0, 1, 5, 21]
+REBALANCE_HORIZON_DAYS = 21
+ALPHA_MONTHLY_SCALE = REBALANCE_HORIZON_DAYS / 252
+BID_ASK_SPREAD = 5e-4
 METRICS = [
     "Return",
     "Volatility",
@@ -54,7 +57,7 @@ def main() -> None:
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
-    alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet")
+    alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet") * ALPHA_MONTHLY_SCALE
     with Path("data/processed/risk_model/sbg.pkl").open("rb") as file:
         risk_model = pickle.load(file)  # noqa: S301
 
@@ -89,6 +92,8 @@ def main() -> None:
                 anchor=anchor,
                 universe=universe,
                 leverage=1.0,
+                bid_ask_spread=BID_ASK_SPREAD,
+                cash_rate_horizon_days=REBALANCE_HORIZON_DAYS,
             )
             result = run_backtest(f"{test}, {lag}-day lag", data, strategy)
             rows[(test, lag)] = evaluate(result, ffr, cpi)

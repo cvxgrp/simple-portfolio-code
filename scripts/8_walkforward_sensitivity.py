@@ -187,12 +187,14 @@ def main() -> None:
         alpha_key = (params["horizon"], params["alpha_halflife"], params["ridge"])
         constructors[label] = AnchoredVolControlPortfolioConstructor(
             ts_lookup=lookup,
-            alphas=alphas[alpha_key].loc[data.timeline].to_numpy(),
+            alphas=alphas[alpha_key].loc[data.timeline].to_numpy() * (21 / 252),
             risk_model=risk_models[params["cov_window"]],
             vol_target=VOL_TARGET,
             anchor=anchor,
             universe=universe,
             leverage=1.0,
+            bid_ask_spread=5e-4,
+            cash_rate_horizon_days=21,
         )
         results[label] = run_backtest(label, data, constructors[label])
     print("Done.", flush=True)

@@ -248,7 +248,7 @@ class VolControlPortfolioConstructor:
 
 
 class AnchoredVolControlPortfolioConstructor(VolControlPortfolioConstructor):
-    """Volatility control portfolio constructor with an l1 trust region."""
+    """Anchored volatility control with optional cash and trading-cost terms."""
 
     def __init__(
         self,
@@ -259,6 +259,8 @@ class AnchoredVolControlPortfolioConstructor(VolControlPortfolioConstructor):
         anchor: np.ndarray,
         universe: np.ndarray | None = None,
         leverage: float = 1.0,
+        bid_ask_spread: float = 0.0,
+        cash_rate_horizon_days: int | None = None,
     ) -> None:
         """Initialize the anchored volatility control portfolio constructor."""
         super().__init__(
@@ -269,7 +271,15 @@ class AnchoredVolControlPortfolioConstructor(VolControlPortfolioConstructor):
             universe=universe,
             leverage=leverage,
         )
+        if bid_ask_spread < 0.0:
+            raise ValueError("Bid-ask spread must be nonnegative.")
+        if cash_rate_horizon_days is not None and cash_rate_horizon_days <= 0:
+            raise ValueError("Cash-rate horizon must be positive.")
         self.anchor = anchor
+        self.bid_ask_spread = bid_ask_spread
+        self.cash_rate_horizon_days = cash_rate_horizon_days
+        self.curr_weights_param = None
+        self.cash_return_param = None
 
     def __call__(
         self,
@@ -292,9 +302,17 @@ class AnchoredVolControlPortfolioConstructor(VolControlPortfolioConstructor):
             self.Sig_half = cp.Parameter(shape=(n + k, n))
             self.alpha_param = cp.Parameter(shape=(n,))
             self.mask = cp.Parameter(shape=(n,))
+            self.curr_weights_param = cp.Parameter(shape=(n,))
+            self.cash_return_param = cp.Parameter()
             self.weights = cp.Variable(n)
             gross = cp.sum(self.weights)
-            self.objective = cp.Maximize(cp.scalar_product(self.alpha_param, self.weights))
+            cash = 1.0 - gross
+            expected_net_return = cp.scalar_product(self.alpha_param, self.weights)
+            expected_net_return += self.cash_return_param * cash
+            expected_net_return -= (
+                0.5 * self.bid_ask_spread * cp.norm1(self.weights - self.curr_weights_param)
+            )
+            self.objective = cp.Maximize(expected_net_return)
             self.factor_risk = cp.norm2(self.Sig_half @ self.weights)
             self.constraints = [
                 gross <= self.leverage,
@@ -308,6 +326,12 @@ class AnchoredVolControlPortfolioConstructor(VolControlPortfolioConstructor):
         self.Sig_half.value = np.vstack([F.T, np.diag(D_half)])
         self.alpha_param.value = alphas
         self.mask.value = (~universe).astype(float)
+        self.curr_weights_param.value = curr_weights
+        self.cash_return_param.value = (
+            0.0
+            if self.cash_rate_horizon_days is None
+            else np.expm1(self.cash_rate_horizon_days * np.log1p(ffr))
+        )
         self.problem.solve(solver=cp.CLARABEL, verbose=False)
         return self.weights.value
 

@@ -94,7 +94,7 @@ def black_litterman_weights(
     tau: float,
 ) -> np.ndarray:
     """Combine a 50/30/20 equilibrium prior with ridge-alpha absolute views."""
-    covariance = 252.0 * covariance_daily
+    covariance = 21.0 * covariance_daily
     prior = delta * covariance @ ANCHOR
     prior_precision = np.linalg.inv(tau * covariance)
     view_precision = np.linalg.inv(omega * tau * np.diag(np.diag(covariance)))
@@ -121,7 +121,7 @@ def main() -> None:
     closes = pd.read_parquet("data/raw/closes.parquet")
     ffr = pd.read_parquet("data/raw/ffr.parquet")["FFR"]
     cpi = pd.read_parquet("data/raw/cpi_econ.parquet")["CPI"] - 1.0
-    alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet")
+    alpha = pd.read_parquet("data/processed/alpha_ridge_sbg.parquet") * (21 / 252)
     with Path("data/processed/risk_model/sbg.pkl").open("rb") as file:
         risk_model = pickle.load(file)  # noqa: S301
 

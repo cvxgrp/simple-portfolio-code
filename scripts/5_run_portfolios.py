@@ -24,6 +24,10 @@ GOLD_VOL_TARGET = 0.14 / np.sqrt(252)
 SBG_6040_VOL_TARGET = 0.07 / np.sqrt(252)
 SBG_503020_VOL_TARGET = 0.07 / np.sqrt(252)
 SBG_ALPHA_VOL_TARGET = 0.07 / np.sqrt(252)
+REBALANCE_HORIZON_DAYS = 21
+RIDGE_ALPHA_MONTHLY_SCALE = REBALANCE_HORIZON_DAYS / 252
+SIMPLE_ALPHA_MONTHLY_SCALE = REBALANCE_HORIZON_DAYS
+BID_ASK_SPREAD = 5e-4
 
 # Capital-gains tax brackets as (long_term_rate, short_term_rate). Must match the
 # TAX_BRACKETS list in scripts/4_metrics_and_plots.py. Bracket 1 is the zero-tax
@@ -139,7 +143,7 @@ spy50_agg30_gld20_weights[:, gld_idx] = 0.2
 # fixed-weight benchmark. The constructor renormalizes weights to sum to
 # `leverage`, so a leverage equal to the risky-weight sum leaves the residual
 # (9.3%) in cash.
-MARKOWITZ_AVG_WEIGHTS = (0.417, 0.248, 0.242)  # SPY, AGG, GLD
+MARKOWITZ_AVG_WEIGHTS = (0.415, 0.201, 0.233)  # SPY, AGG, GLD
 MARKOWITZ_AVG_LEVERAGE = sum(MARKOWITZ_AVG_WEIGHTS)
 markowitz_avg_weights = np.zeros((n_time, n_assets))
 markowitz_avg_weights[:, spy_idx] = MARKOWITZ_AVG_WEIGHTS[0]
@@ -174,6 +178,20 @@ anchor_503020 = np.zeros(n_assets)
 anchor_503020[spy_idx] = 0.5
 anchor_503020[agg_idx] = 0.3
 anchor_503020[gld_idx] = 0.2
+
+# Put both return forecasts in expected-next-month units before optimization.
+# The ridge artifact predicts an annualized 100-day forward return; the simple
+# momentum artifact is an expected daily return.
+ridge_alphas_monthly = (
+    pd.read_parquet(proc_data_dir / "alpha_ridge_sbg.parquet").loc[monthly_data.timeline].to_numpy()
+    * RIDGE_ALPHA_MONTHLY_SCALE
+)
+simple_alphas_monthly = (
+    pd.read_parquet(proc_data_dir / "alpha_simple_sbg.parquet")
+    .loc[monthly_data.timeline]
+    .to_numpy()
+    * SIMPLE_ALPHA_MONTHLY_SCALE
+)
 
 # ── Strategies ────────────────────────────────────────────────────────────────
 
@@ -282,27 +300,27 @@ sbg_503020_mat_vc_strategy = FixedWeightMatrixVolControlPortfolioConstructor(
 # Markowitz portfolio: ridge alpha with a 50/30/20 relative-allocation trust region.
 sbg_alpha_strategy = AnchoredVolControlPortfolioConstructor(
     ts_lookup=lookup,
-    alphas=pd.read_parquet(proc_data_dir / "alpha_ridge_sbg.parquet")
-    .loc[monthly_data.timeline]
-    .to_numpy(),
+    alphas=ridge_alphas_monthly,
     risk_model=risk_model_sbg,
     vol_target=SBG_ALPHA_VOL_TARGET,
     anchor=anchor_503020,
     universe=sbg_503020_universe,
     leverage=LEVERAGE,
+    bid_ask_spread=BID_ASK_SPREAD,
+    cash_rate_horizon_days=REBALANCE_HORIZON_DAYS,
 )
 
 # Simple Markowitz: EWMA-of-returns alpha with the same trust region.
 sbg_simple_alpha_strategy = AnchoredVolControlPortfolioConstructor(
     ts_lookup=lookup,
-    alphas=pd.read_parquet(proc_data_dir / "alpha_simple_sbg.parquet")
-    .loc[monthly_data.timeline]
-    .to_numpy(),
+    alphas=simple_alphas_monthly,
     risk_model=risk_model_sbg,
     vol_target=SBG_ALPHA_VOL_TARGET,
     anchor=anchor_503020,
     universe=sbg_503020_universe,
     leverage=LEVERAGE,
+    bid_ask_spread=BID_ASK_SPREAD,
+    cash_rate_horizon_days=REBALANCE_HORIZON_DAYS,
 )
 
 # Simple Anchored momentum: EWMA-of-returns alpha with the same trust region
@@ -499,26 +517,26 @@ for vol_target_ann, vol_target_daily in zip(VOL_TARGETS_ANN, VOL_TARGETS_DAILY, 
     # Markowitz portfolio: ridge alpha with the 50/30/20 trust region.
     sbg_alpha_strategy = AnchoredVolControlPortfolioConstructor(
         ts_lookup=lookup,
-        alphas=pd.read_parquet(proc_data_dir / "alpha_ridge_sbg.parquet")
-        .loc[monthly_data.timeline]
-        .to_numpy(),
+        alphas=ridge_alphas_monthly,
         risk_model=risk_model_sbg,
         vol_target=vol_target_daily,
         anchor=anchor_503020,
         universe=sbg_503020_universe,
         leverage=LEVERAGE,
+        bid_ask_spread=BID_ASK_SPREAD,
+        cash_rate_horizon_days=REBALANCE_HORIZON_DAYS,
     )
 
     sbg_simple_alpha_strategy = AnchoredVolControlPortfolioConstructor(
         ts_lookup=lookup,
-        alphas=pd.read_parquet(proc_data_dir / "alpha_simple_sbg.parquet")
-        .loc[monthly_data.timeline]
-        .to_numpy(),
+        alphas=simple_alphas_monthly,
         risk_model=risk_model_sbg,
         vol_target=vol_target_daily,
         anchor=anchor_503020,
         universe=sbg_503020_universe,
         leverage=LEVERAGE,
+        bid_ask_spread=BID_ASK_SPREAD,
+        cash_rate_horizon_days=REBALANCE_HORIZON_DAYS,
     )
 
     backtests = [
